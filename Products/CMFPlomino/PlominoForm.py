@@ -815,25 +815,6 @@ class PlominoForm(ATFolder):
             return self.errors_json(errors=json.dumps({'success': False,'errors':errors}))
         else:
             return self.errors_json(errors=json.dumps({'success': True}))
-        
-
-    security.declarePrivate('_get_js_hidden_fields')
-    def _get_js_hidden_fields(self, REQUEST, doc):
-        hidden_fields = []
-        hidewhens = json.loads(self.getHidewhenAsJSON(REQUEST))
-        html_content = self._get_html_content()
-        for hidewhenName, doit in hidewhens.items():
-            if not doit: # Only consider True hidewhens
-                continue
-            start = '<span class="plominoHidewhenClass">start:'+hidewhenName+'</span>'
-            end = '<span class="plominoHidewhenClass">end:'+hidewhenName+'</span>'
-            for hiddensection in re.findall(start + '(.*?)' + end, html_content):
-                hidden_fields += re.findall(
-                    '<span class="plominoFieldClass">([^<]+)</span>', hiddensection )
-        for subformname in self.getSubforms(doc):
-            subform = self.getParentDatabase().getForm(subformname)
-            hidden_fields += subform._get_js_hidden_fields(REQUEST, doc)
-        return hidden_fields
 
     security.declarePublic('validateInputs')
     def validateInputs(self, REQUEST, doc=None):
@@ -841,8 +822,6 @@ class PlominoForm(ATFolder):
         """
         errors=[]
         fields = self.getFormFields(includesubforms=True, doc=doc, applyhidewhen=True)
-        hidden_fields = self._get_js_hidden_fields(REQUEST, doc)
-        fields = [field for field in fields if field.getId() not in hidden_fields]
         for f in fields:
             fieldname = f.id
             fieldtype = f.getFieldType()
